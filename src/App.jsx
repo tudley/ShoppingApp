@@ -1,48 +1,100 @@
 import { useEffect, useState } from "react";
 import getItems from "./APIGateway";
 import "./App.css";
+import NavBar from "./components/NavBar";
+import ItemCard from "./components/ItemCard";
 
 function App() {
   // useStates
   // stock is my array of all items (stored as objects). it is initialised from the API response.
-  const [stock, setStock] = useState([]); // set this as empty, as useState will not wait for the promise to be fufilled
-
+  const [stock, setStock] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState(null);
+  const [currentStock, setCurrentStock] = useState([]);
   const [cart, setCart] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchData = async () => {
-    const items = await getItems();
-    setStock(items);
-  };
-
-  const sortHighRating = () => {
-    const sorted = [...stock].sort((a, b) => b.rating.rate - a.rating.rate);
-    setStock(sorted);
-  };
-
-  const sortLowRating = () => {
-    const sorted = [...stock].sort((a, b) => a.rating.rate - b.rating.rate);
-    setStock(sorted);
-  };
-
-  const sortHighPrice = () => {
-    const sorted = [...stock].sort((a, b) => b.price - a.price);
-    setStock(sorted);
-  };
-
-  const sortLowPrice = () => {
-    const sorted = [...stock].sort((a, b) => a.price - b.price);
-    setStock(sorted);
-  };
-
+  // fetch data on initialisation
   useEffect(() => {
-    //setStock(getItems()); // even though getItems internally awaits for the API call, getItems immediately returns a promise, because it's asynchronous
     fetchData();
   }, []);
 
+  // when searchQuery changes, update currentStock
+  useEffect(() => {
+    let result = stock;
+
+    if (categoryFilter) {
+      console.log(result);
+      result = filterByCategory(result, categoryFilter);
+    }
+    if (searchQuery) {
+      result = filterBySearchQuery(result, searchQuery);
+    }
+    setCurrentStock(result);
+  }, [stock, searchQuery, categoryFilter]);
+
+  // returns stock filtered by selected catgory
+  const filterByCategory = (stock, category) => {
+    const filteredStock = stock.filter((item) => item.category === category);
+    return filteredStock;
+  };
+
+  // returns stock filtered by match to searchQuery
+  const filterBySearchQuery = (stock, searchQuery) => {
+    const filteredStock = searchQuery
+      ? stock.filter((item) => {
+          return item.title.toLowerCase().includes(searchQuery.toLowerCase());
+        })
+      : stock;
+    return filteredStock;
+  };
+
+  // set the stock to the API return value (called once on init)
+  const fetchData = async () => {
+    const items = await getItems();
+    setStock(items);
+    setCurrentStock(items);
+    console.log(items);
+  };
+
+  // update searchQuery from user input form
+  const updateSearchQuery = (string) => {
+    setSearchQuery(string);
+  };
+
+  // order stock based on rating descending
+  const sortHighRating = () => {
+    const sorted = [...currentStock].sort(
+      (a, b) => b.rating.rate - a.rating.rate
+    );
+    setCurrentStock(sorted);
+  };
+
+  // order stock based on rating ascending
+  const sortLowRating = () => {
+    const sorted = [...currentStock].sort(
+      (a, b) => a.rating.rate - b.rating.rate
+    );
+    setCurrentStock(sorted);
+  };
+
+  // order stock based on price descending
+  const sortHighPrice = () => {
+    const sorted = [...currentStock].sort((a, b) => b.price - a.price);
+    setCurrentStock(sorted);
+  };
+
+  // order stock based on price acending
+  const sortLowPrice = () => {
+    const sorted = [...currentStock].sort((a, b) => a.price - b.price);
+    setCurrentStock(sorted);
+  };
+
+  // add item to cart
   const addItemToCart = (item) => {
     setCart([...cart, item]);
   };
 
+  // return JSX element
   return (
     <>
       <NavBar
@@ -52,14 +104,14 @@ function App() {
         sortLowRating={sortLowRating}
         sortHighPrice={sortHighPrice}
         sortLowPrice={sortLowPrice}
+        setCategoryFilter={setCategoryFilter}
+        updateSearchQuery={updateSearchQuery}
+        searchQuery={searchQuery}
       />
-      {/* <button onClick={async () => console.log(await getItems())}>
-        Print Items
-      </button> */}
       <div className="itemGrid">
-        {stock.map((item) => {
+        {currentStock.map((item) => {
           return (
-            <ItemCard item={item} addItemtoCart={addItemToCart} key={item.id} />
+            <ItemCard item={item} addItemToCart={addItemToCart} key={item.id} />
           );
         })}
       </div>
@@ -68,152 +120,3 @@ function App() {
 }
 
 export default App;
-
-const ItemCard = ({ item, addItemtoCart }) => {
-  const [showFullDescription, setShowFullDescription] = useState(false);
-
-  const descriptionString = showFullDescription
-    ? item.description
-    : item.description.length > 50
-    ? item.description.slice(0, 50) + "..."
-    : item.description;
-
-  const ratingToString = (rating) => {
-    let ratingString = "";
-    const star = "⭐";
-    const intRating = Math.round(rating);
-    for (let i = 0; i < intRating; i++) {
-      ratingString += star;
-    }
-    return ratingString;
-  };
-
-  return (
-    <>
-      <div className="itemCard">
-        <h3>{item.title}</h3>
-        <img className="itemCardImage" src={item.image} alt="oops" />
-        <p onClick={() => setShowFullDescription(!showFullDescription)}>
-          {descriptionString}
-        </p>
-        <div className="buyBar">
-          <p>£{item.price.toFixed(2)}</p>
-          <p>{ratingToString(item.rating.rate)}</p>
-          <button className="buyButton" onClick={() => addItemtoCart(item)}>
-            Buy
-          </button>
-        </div>
-      </div>
-    </>
-  );
-};
-
-const NavBar = ({
-  stock,
-  cart,
-  sortHighRating,
-  sortLowRating,
-  sortHighPrice,
-  sortLowPrice,
-}) => {
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [showFilterMenu, setShowFilterMenu] = useState(false);
-
-  return (
-    <div className="navBar">
-      <div
-        className="sortWrapper"
-        onMouseEnter={() => setShowSortMenu(true)}
-        onMouseLeave={() => setShowSortMenu(false)}
-      >
-        <button>Sort by...</button>
-        {showSortMenu && (
-          <SortSelector
-            sortHighRating={sortHighRating}
-            sortLowRating={sortLowRating}
-            sortLowPrice={sortLowPrice}
-            sortHighPrice={sortHighPrice}
-          />
-        )}
-      </div>
-      <div
-        className="filterWrapper"
-        onMouseEnter={() => setShowFilterMenu(true)}
-        onMouseLeave={() => setShowFilterMenu(false)}
-      >
-        <button>Filter by...</button>
-        {showFilterMenu && (
-          <FilterSelector
-            categories={[...new Set(stock.map((item) => item.category))]}
-          />
-        )}
-      </div>
-      <div className="checkoutButtonWrapper">
-        <button className="checkoutButton">
-          Basket: {cart.length == 0 ? "Empty" : `(${cart.length})`}
-        </button>
-      </div>
-    </div>
-  );
-};
-
-const SortSelector = ({
-  sortHighRating,
-  sortLowRating,
-  sortHighPrice,
-  sortLowPrice,
-}) => {
-  const [hovered, setHovered] = useState(null);
-
-  return (
-    <div className="sortSelector">
-      <button
-        onMouseEnter={() => setHovered("rating")}
-        onMouseLeave={() => setHovered(null)}
-      >
-        Rating...
-      </button>
-
-      <button
-        onMouseEnter={() => setHovered("price")}
-        onMouseLeave={() => setHovered(null)}
-      >
-        Price...
-      </button>
-
-      {hovered === "rating" && (
-        <div
-          className="subSortSelector"
-          style={{ top: "0rem" }}
-          onMouseEnter={() => setHovered("rating")}
-          onMouseLeave={() => setHovered(null)}
-        >
-          <button onClick={sortHighRating}>Highest Rated</button>
-          <button onClick={sortLowRating}>Lowest Rated</button>
-        </div>
-      )}
-
-      {hovered === "price" && (
-        <div
-          className="subSortSelector"
-          style={{ top: "2.5rem" }}
-          onMouseEnter={() => setHovered("price")}
-          onMouseLeave={() => setHovered(null)}
-        >
-          <button onClick={sortHighPrice}>Highest Price</button>
-          <button onClick={sortLowPrice}>Lowest Price</button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const FilterSelector = ({ categories }) => {
-  return (
-    <div className="filterSelector">
-      {categories.map((category) => {
-        return <button>{category}</button>;
-      })}
-    </div>
-  );
-};
