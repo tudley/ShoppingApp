@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const ItemCard = ({ item, addItemToCart }) => {
+const ItemCard = ({ item, handleAddToBasket }) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
 
@@ -73,7 +73,7 @@ const ItemCard = ({ item, addItemToCart }) => {
             </>
           )}
           <p>{stockToString(item)}</p>
-          <button className="buyButton" onClick={() => addItemToCart(item)}>
+          <button className="buyButton" onClick={() => handleAddToBasket(item, selectedSize)}>
             Add to Cart
           </button>
         </div>

@@ -10,7 +10,8 @@ const getItems = async () => {
       ? {
           ...item,
           stock: {
-            small: Math.floor(10 * Math.random()),
+            //small: Math.floor(10 * Math.random()),
+            small : 0,
             medium: Math.floor(10 * Math.random()),
             large: Math.floor(10 * Math.random()),
           },
