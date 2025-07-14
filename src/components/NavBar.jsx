@@ -14,10 +14,20 @@ const NavBar = ({
   setCategoryFilter,
   updateSearchQuery,
   searchQuery,
+  handleAddToCart,
+  decrementOrderByOne,
 }) => {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showBasket, setShowBasket] = useState(false);
+
+  const returnCartLength = () => {
+    let cartLength = 0;
+    cart.map((item) => {
+      cartLength += item.qty;
+    });
+    return cartLength;
+  };
 
   return (
     <div className="navBar">
@@ -61,9 +71,17 @@ const NavBar = ({
         onMouseLeave={() => setShowBasket(false)}
       >
         <button className="checkoutButton">
-          Basket: {cart.length == 0 ? "Empty" : `(${cart.length})`}
+          Basket:
+          {returnCartLength() == 0 ? "Empty" : `(${returnCartLength()})`}
         </button>
-        {showBasket && <Basket cart={cart} />}
+        {showBasket && (
+          <Basket
+            cart={cart}
+            returnCartLength={returnCartLength}
+            handleAddToCart={handleAddToCart}
+            decrementOrderByOne={decrementOrderByOne}
+          />
+        )}
       </div>
     </div>
   );

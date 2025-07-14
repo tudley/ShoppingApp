@@ -92,29 +92,35 @@ function App() {
   // add item to cart
   const updateCart = (item, selectedSize = null) => {
     // if item is not in cart, create new entry, otherwise increment qty by 1
-    if (cart.includes(item)) {
-      cart.map((cartItem) => {
-        if (cartItem.title === item.title) {
-          const updatedCartObject = { ...cartItem, stock: cartItem.stock + 1 };
-          setCart([...cart, updatedCartObject]);
-        }
+
+    if (
+      cart.find(
+        (currentItem) =>
+          currentItem.id === item.id && currentItem.size === selectedSize
+      )
+    ) {
+      // item is already in cart
+      const updatedCart = cart.map((currentItem) => {
+        currentItem.id === item.id && currentItem.qty++;
+        return currentItem;
       });
+      setCart(updatedCart);
     } else {
       // create a new entry in the cart
-      const newItem = {
+      const cartItem = {
         title: item.title,
         price: item.price,
         id: item.id,
         size: selectedSize,
         qty: 1,
+        image: item.image,
       };
-      setCart([...cart, newItem]);
+      setCart([...cart, cartItem]);
     }
   };
 
   const handleAddToCart = (item, selectedSize = null) => {
     // loop thruogh each item, if item is selected item, decrement item stock in selected confoguration by one, and add the item to the cart
-
     // create updatedStock array
     const updatedStock = stock.map((currentItem) => {
       if (currentItem.id === item.id) {
@@ -134,6 +140,9 @@ function App() {
                 [selectedSize]: currentItem.stock[selectedSize] - 1,
               },
             };
+            console.log(
+              "clothing item recognised, stock decremented, cart updating."
+            );
             updateCart(currentItem, selectedSize); // update customers basket
             return updatedItem;
           }
@@ -148,6 +157,9 @@ function App() {
               ...currentItem,
               stock: currentItem.stock - 1,
             }; //decrement item stock by one
+            console.log(
+              "non clothing item recognised, stock decremented, cart updating."
+            );
             updateCart(currentItem); // update customers basket
             return updatedItem;
           }
@@ -159,6 +171,68 @@ function App() {
     });
     setStock(updatedStock);
   };
+
+  /*--------------------------------------------------*/
+
+  const incrementStock = (cartItem, amount) => {
+    const updatedStock = stock.map((item) => {
+      if (item.id === cartItem.id) {
+        if (typeof item.stock === "object") {
+          // object stock is an object
+          const updatedItem = {
+            ...item,
+            stock: {
+              ...item.stock,
+              [cartItem.size]: item.stock[cartItem.size] + amount,
+            },
+          };
+          return updatedItem;
+        } else {
+          const updatedItem = { ...item, stock: item.stock + amount };
+          return updatedItem;
+        }
+      } else {
+        return item;
+      }
+    });
+    setStock(updatedStock);
+  };
+
+  const decrementOrderByOne = (cartItem) => {
+    // decrement cart item by 1, and if 0, remove entry from cart. Then increment stock item's stock by one
+    console.log("decrementOrderByOne called:");
+    const updatedCart = cart
+      .map((currentCartItem) => {
+        if (
+          currentCartItem.id === cartItem.id &&
+          currentCartItem.size === cartItem.size
+        ) {
+          if (cartItem.qty === 1) {
+            console.log(
+              "only one of the item is in the cart, so entry must be removed from cart"
+            );
+            incrementStock(cartItem, 1);
+            return null;
+          } else {
+            console.log(
+              "more then one in the cart, so just count down by one "
+            );
+            const updatedCartItem = {
+              ...currentCartItem,
+              qty: currentCartItem.qty - 1,
+            };
+            incrementStock(cartItem, 1);
+            return updatedCartItem;
+          }
+        } else {
+          return currentCartItem;
+        }
+      })
+      .filter((item) => item !== null);
+    setCart(updatedCart);
+  };
+
+  /*-------------------------------------------*/
 
   // return JSX element
   return (
@@ -173,6 +247,8 @@ function App() {
         setCategoryFilter={setCategoryFilter}
         updateSearchQuery={updateSearchQuery}
         searchQuery={searchQuery}
+        handleAddToCart={handleAddToCart}
+        decrementOrderByOne={decrementOrderByOne}
       />
       <div className="itemGrid">
         {currentStock.map((item) => {

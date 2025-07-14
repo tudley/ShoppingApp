@@ -1,18 +1,38 @@
-const Basket = ({ cart }) => {
-  const formatTitleString = (item) => {
-    return item.title.length > 30
-      ? item.title.slice(0, 16) + "..."
-      : item.title;
+import BasketItemCard from "./BasketItemCard";
+
+const Basket = ({
+  cart,
+  stock,
+  returnCartLength,
+  handleAddToCart,
+  decrementOrderByOne,
+}) => {
+  const totalCost = (cart) => {
+    let total = 0;
+    cart.forEach((item) => (total += item.price));
+    return total;
   };
 
   return (
     <div className="basketDropDown">
-      <p>Cart: </p>
-      <ul>
-        {cart.map((item) => {
-          return <li>{formatTitleString(item)}</li>;
-        })}
-      </ul>
+      <a href="">Your Cart ({returnCartLength()}): </a>
+
+      {cart.map((item) => {
+        return (
+          <BasketItemCard
+            cart={cart}
+            cartItem={item}
+            stock={stock}
+            handleAddToCart={handleAddToCart}
+            decrementOrderByOne={decrementOrderByOne}
+          />
+        );
+      })}
+
+      <div className="basketItem">
+        <span className="itemTitle">Total:</span>
+        <span className="itemPrice">{totalCost(cart)}</span>
+      </div>
     </div>
   );
 };

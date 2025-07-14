@@ -26,15 +26,27 @@ const ItemCard = ({ item, handleAddToCart }) => {
   const stockToString = (item) => {
     let string;
     if (item.category.includes("clothing")) {
-      if (item.stock[selectedSize] === 0) {
-        string = "Out of Stock";
+      // item has sizes
+      if (selectedSize === null) {
+        // size has not been selected
+        string = "Select a size to see if it's in stock...";
       } else {
-        string = `Stock: ${item.stock[selectedSize]}`;
+        // size has bee selected
+        if (item.stock[selectedSize] === 0) {
+          // size is out of stock
+          string = "Out of Stock";
+        } else {
+          // size is in stock
+          string = `Stock: ${item.stock[selectedSize]}`;
+        }
       }
     } else {
+      // item has no sizes
       if (item.stock === 0) {
+        // item is out of stock
         string = `Out of Stock`;
       } else {
+        // item is in stock
         string = `Stock: ${item.stock}`;
       }
     }
@@ -77,7 +89,9 @@ const ItemCard = ({ item, handleAddToCart }) => {
             className="buyButton"
             onClick={() => handleAddToCart(item, selectedSize)}
           >
-            Add to Cart
+            {item.stock[selectedSize] === 0
+              ? "Unable to add to cart"
+              : "Add to Cart"}
           </button>
         </div>
       </div>
