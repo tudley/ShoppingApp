@@ -4,8 +4,9 @@ const Basket = ({
   cart,
   stock,
   returnCartLength,
-  handleAddToCart,
-  decrementOrderByOne,
+  //handleAddToCart,
+  //decrementOrderByOne,
+  updateCart
 }) => {
   const totalCost = (cart) => {
     let total = 0;
@@ -23,8 +24,9 @@ const Basket = ({
             cart={cart}
             cartItem={item}
             stock={stock}
-            handleAddToCart={handleAddToCart}
-            decrementOrderByOne={decrementOrderByOne}
+            //handleAddToCart={handleAddToCart}
+            //decrementOrderByOne={decrementOrderByOne}
+            updateCart={updateCart}
           />
         );
       })}
