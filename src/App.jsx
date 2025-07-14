@@ -89,55 +89,76 @@ function App() {
     setCurrentStock(sorted);
   };
 
-
   // add item to cart
-const updateCart = (item, selectedSize=null) => {
-  // if item is not in cart, create new entry, otherwise increment qty by 1
-  if (cart.includes(item)){
-    cart.map((cartItem) => {
-      if (cartItem.title === item.title) {
-        const updatedCartObject = {...cartItem, stock:cartItem.stock + 1}
-        setCart([...cart, updatedCartObject])
+  const updateCart = (item, selectedSize = null) => {
+    // if item is not in cart, create new entry, otherwise increment qty by 1
+    if (cart.includes(item)) {
+      cart.map((cartItem) => {
+        if (cartItem.title === item.title) {
+          const updatedCartObject = { ...cartItem, stock: cartItem.stock + 1 };
+          setCart([...cart, updatedCartObject]);
+        }
+      });
+    } else {
+      // create a new entry in the cart
+      const newItem = {
+        title: item.title,
+        price: item.price,
+        id: item.id,
+        size: selectedSize,
+        qty: 1,
+      };
+      setCart([...cart, newItem]);
     }
-  })
-  } else { // create a new entry in the cart
-    const newItem = {
-    title : item.title, price : item.price, id : item.id, size : selectedSize, qty : 1}
-    setCart([...cart, newItem])
-  }
-  }
-}
+  };
 
-const handleAddToCart = (item, selectedSize=null) => {
-  // loop thruogh each item, if item is selected item, decrement item stock in selected confoguration by one, and add the item to the cart
+  const handleAddToCart = (item, selectedSize = null) => {
+    // loop thruogh each item, if item is selected item, decrement item stock in selected confoguration by one, and add the item to the cart
 
-  // create updatedStock array
-  const updatedStock = stock.map((currentItem) => {
-    if (currentItem.id === item.id) { // currentItem equals the item in the argument
-      if (typeof(currentItem.stock) === "object") { // item has distinct sizes
-        if (currentItem.stock[selectedSize]<1) { // item is out of stock
-          return currentItem;
-        } else { // clothing item is in stock
-          const updatedItem = {...currentItem, stock : {...currentItem.stock, [selectedSize] : currentItem.stock[selectedSize] - 1}}; // decrement items stock
-          addItemToCart(updatedItem, selectedSize)
-          return updatedItem
+    // create updatedStock array
+    const updatedStock = stock.map((currentItem) => {
+      if (currentItem.id === item.id) {
+        // currentItem equals the item in the argument
+        if (typeof currentItem.stock === "object") {
+          // item has distinct sizes
+          if (currentItem.stock[selectedSize] < 1) {
+            // item is out of stock
+            return currentItem;
+          } else {
+            // clothing item is in stock
+            const updatedItem = {
+              // decrement items stock
+              ...currentItem,
+              stock: {
+                ...currentItem.stock,
+                [selectedSize]: currentItem.stock[selectedSize] - 1,
+              },
+            };
+            updateCart(currentItem, selectedSize); // update customers basket
+            return updatedItem;
+          }
+        } else {
+          // item with one size
+          if (currentItem.stock < 1) {
+            //item out of stock
+            return item;
+          } else {
+            // item in stock
+            const updatedItem = {
+              ...currentItem,
+              stock: currentItem.stock - 1,
+            }; //decrement item stock by one
+            updateCart(currentItem); // update customers basket
+            return updatedItem;
+          }
         }
-      } else { // item with one size
-        if (currentItem.stock < 1) { //item out of stock
-          return item;
-        } else {  // item in stock
-          const updatedItem = {...currentItem, stock : currentItem.stock - 1}; //decrement item stock by one
-          addItemToCart(updatedItem);
-          return updatedItem;
-        }
+      } else {
+        // curretItem doesnt match item argument, return unchanged item
+        return currentItem;
       }
-  } else { // curretItem doesnt match item argument, return unchanged item
-    return currentItem
-  }})
-  setStock(updatedStock);
-}
-
-
+    });
+    setStock(updatedStock);
+  };
 
   // return JSX element
   return (
@@ -156,7 +177,11 @@ const handleAddToCart = (item, selectedSize=null) => {
       <div className="itemGrid">
         {currentStock.map((item) => {
           return (
-            <ItemCard item={item} addItemToCart={handleAddToBasket} key={item.id} />
+            <ItemCard
+              item={item}
+              handleAddToCart={handleAddToCart}
+              key={item.id}
+            />
           );
         })}
       </div>
