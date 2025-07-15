@@ -4,13 +4,12 @@ const Basket = ({
   cart,
   stock,
   returnCartLength,
-  //handleAddToCart,
-  //decrementOrderByOne,
-  updateCart
+  updateCart,
+  removeItemFromBasket,
 }) => {
   const totalCost = (cart) => {
     let total = 0;
-    cart.forEach((item) => (total += item.price));
+    cart.forEach((item) => (total += item.price * item.qty));
     return total;
   };
 
@@ -24,16 +23,22 @@ const Basket = ({
             cart={cart}
             cartItem={item}
             stock={stock}
-            //handleAddToCart={handleAddToCart}
-            //decrementOrderByOne={decrementOrderByOne}
             updateCart={updateCart}
+            removeItemFromBasket={removeItemFromBasket}
           />
         );
       })}
 
       <div className="basketItem">
-        <span className="itemTitle">Total:</span>
-        <span className="itemPrice">{totalCost(cart)}</span>
+        <div className="basketItemLeft">
+          <span className="basketTitle">Total : </span>
+          <span className="basketPrice">£{totalCost(cart)}</span>
+        </div>
+        <div className="basketItemRight">
+          <span className="checkoutButton">
+            <button>Proceed to checkout</button>
+          </span>
+        </div>
       </div>
     </div>
   );

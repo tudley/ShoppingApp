@@ -89,247 +89,124 @@ function App() {
     setCurrentStock(sorted);
   };
 
-/*-------------------NEw FUNCTIONS---------------------------------*/
+  /*----------------NEW <FUNCTIONS--------></FUNCTIONS-------->*/
 
-const updateCart = (action, item) => {
-  const hasSize = item.size !== undefined && item.size !== null;
+  const updateCart = (action, item) => {
+    const hasSize = item.size !== undefined && item.size !== null; // is the items size defined? (for when adding to basket from itemCard)
+    if (action === "adding") {
+      const itemInStock = stock.find(
+        (s) =>
+          s.id === item.id && (!hasSize ? s.stock > 0 : s.stock[item.size] > 0)
+      ); // check if item is in stock, catches items that have sizes or not. [NOTE: IF ADDING TO CART FROM ITEMCARD, ONLY ALLOW BUY BUTTON IF SIZE IS SELECTED.]
 
-  if (action === "adding") {
-    const itemInStock = stock.find(
-      (s) =>
-        s.id === item.id &&
-        (!hasSize ? s.stock > 0 : s.size[item.size] > 0)
-    );
+      if (itemInStock) {
+        updateStock("decrease", item, hasSize);
+        updateCartItems("add", item, hasSize);
+      }
+    } else if (action === "subtracting") {
+      const itemInCart = cart.find(
+        (c) => c.id === item.id && (!hasSize || c.size === item.size)
+      ); // check if the item is in the cart (mandatory for subtracting from the cart)
 
-    if (itemInStock) {
-      updateStock("decrease", item, hasSize);
-      updateCartItems("add", item, hasSize);
+      if (itemInCart) {
+        updateStock("increase", item, hasSize);
+        updateCartItems("subtract", item, hasSize);
+      }
     }
-  } else if (action === "subtracting") {
-    const itemInCart = cart.find(
-      (c) => c.id === item.id && (!hasSize || c.size === item.size)
-    );
+  };
 
-    if (itemInCart) {
-      updateStock("increase", item, hasSize);
-      updateCartItems("subtract", item, hasSize);
-    }
-  }
-};
+  const updateStock = (direction, item, hasSize, qty = 1) => {
+    const updated = stock.map((s) => {
+      if (s.id !== item.id) return s; // if not match, return item
 
-const updateStock = (direction, item, hasSize) => {
-  const updated = stock.map((s) => {
-    if (s.id !== item.id) return s;
+      if (!hasSize) {
+        // if not hasSize, amend stock easy way
+        return {
+          ...s,
+          stock: direction === "increase" ? s.stock + 1 : s.stock - 1,
+        };
+      }
 
-    if (!hasSize) {
       return {
+        // else, hasSize, amend stock the hard way
         ...s,
-        stock: direction === "increase" ? s.stock + 1 : s.stock - 1,
+        stock: {
+          ...s.stock,
+          [item.size]:
+            direction === "increase"
+              ? s.stock[item.size] + qty
+              : s.stock[item.size] - qty,
+        },
       };
+    });
+
+    setStock(updated);
+  };
+
+  const updateCartItems = (action, item, hasSize) => {
+    let updated;
+
+    if (action === "add") {
+      const exists = cart.some(
+        (c) => c.id === item.id && (!hasSize || c.size === item.size)
+      ); // find if item is already in cart, for items with and without size
+
+      if (exists) {
+        // if item is in cart, increment one baed on hasSize.
+        updated = cart.map((c) => {
+          if (c.id === item.id && (!hasSize || c.size === item.size)) {
+            return { ...c, qty: c.qty + 1 };
+          }
+          return c;
+        });
+      } else {
+        // create new item to add to the cart
+        const newItem = {
+          id: item.id,
+          title: item.title,
+          size: item.size,
+          qty: 1,
+          price: item.price,
+          image: item.image,
+        };
+        updated = [...cart, newItem];
+      }
+
+      // reduce() method.
+    } else if (action === "subtract") {
+      updated = cart.reduce((acc, c) => {
+        if (c.id === item.id && (!hasSize || c.size === item.size)) {
+          if (c.qty > 1) acc.push({ ...c, qty: c.qty - 1 });
+        } else {
+          acc.push(c);
+        }
+        return acc;
+      }, []);
     }
 
-    return {
-      ...s,
-      stock: {
-        ...s.size,
-        [item.size]: direction === "increase"
-          ? s.stock[item.size] + 1
-          : s.stock[item.size] - 1,
-      },
-    };
-  });
+    setCart(updated);
+  };
 
-  setStock(updated);
-};
-
-const updateCartItems = (action, item, hasSize) => {
-  let updated;
-
-  if (action === "add") {
-    const exists = cart.some(
+  const removeItemFromBasket = (item) => {
+    // identify item and hasSize flag
+    const hasSize = item.size !== undefined && item.size !== null;
+    const itemToRemove = cart.find(
       (c) => c.id === item.id && (!hasSize || c.size === item.size)
     );
 
-    if (exists) {
-      updated = cart.map((c) => {
-        if (c.id === item.id && (!hasSize || c.size === item.size)) {
-          return { ...c, qty: c.qty + 1 };
-        }
-        return c;
-      });
-    } else {
-      const newItem = {
-        id: item.id,
-        title: item.title,
-        size: item.size,
-        qty: 1,
-        price: item.price,
-        img: item.img,
-      };
-      updated = [...cart, newItem];
-    }
+    // update stock
+    updateStock("increase", itemToRemove, hasSize, itemToRemove.qty);
 
-  } else if (action === "subtract") {
-    updated = cart.reduce((acc, c) => {
-      if (c.id === item.id && (!hasSize || c.size === item.size)) {
-        if (c.qty > 1) acc.push({ ...c, qty: c.qty - 1 });
-      } else {
+    // update cart
+    const updated = cart.reduce((acc, c) => {
+      const isSameItem = c.id === item.id && (!hasSize || c.size === item.size);
+      if (!isSameItem) {
         acc.push(c);
       }
       return acc;
     }, []);
-  }
-
-  setCart(updated);
-};
-
-
-  // // add item to cart
-  // const updateCart = (item, selectedSize = null) => {
-  //   // if item is not in cart, create new entry, otherwise increment qty by 1
-
-  //   if (
-  //     cart.find(
-  //       (currentItem) =>
-  //         currentItem.id === item.id && currentItem.size === selectedSize
-  //     )
-  //   ) {
-  //     // item is already in cart
-  //     const updatedCart = cart.map((currentItem) => {
-  //       currentItem.id === item.id && currentItem.qty++;
-  //       return currentItem;
-  //     });
-  //     setCart(updatedCart);
-  //   } else {
-  //     // create a new entry in the cart
-  //     const cartItem = {
-  //       title: item.title,
-  //       price: item.price,
-  //       id: item.id,
-  //       size: selectedSize,
-  //       qty: 1,
-  //       image: item.image,
-  //     };
-  //     setCart([...cart, cartItem]);
-  //   }
-  // };
-
-  // const handleAddToCart = (item, selectedSize = null) => {
-  //   // loop thruogh each item, if item is selected item, decrement item stock in selected confoguration by one, and add the item to the cart
-  //   // create updatedStock array
-  //   const updatedStock = stock.map((currentItem) => {
-  //     if (currentItem.id === item.id) {
-  //       // currentItem equals the item in the argument
-  //       if (typeof currentItem.stock === "object") {
-  //         // item has distinct sizes
-  //         if (currentItem.stock[selectedSize] < 1) {
-  //           // item is out of stock
-  //           return currentItem;
-  //         } else {
-  //           // clothing item is in stock
-  //           const updatedItem = {
-  //             // decrement items stock
-  //             ...currentItem,
-  //             stock: {
-  //               ...currentItem.stock,
-  //               [selectedSize]: currentItem.stock[selectedSize] - 1,
-  //             },
-  //           };
-  //           console.log(
-  //             "clothing item recognised, stock decremented, cart updating."
-  //           );
-  //           updateCart(currentItem, selectedSize); // update customers basket
-  //           return updatedItem;
-  //         }
-  //       } else {
-  //         // item with one size
-  //         if (currentItem.stock < 1) {
-  //           //item out of stock
-  //           return item;
-  //         } else {
-  //           // item in stock
-  //           const updatedItem = {
-  //             ...currentItem,
-  //             stock: currentItem.stock - 1,
-  //           }; //decrement item stock by one
-  //           console.log(
-  //             "non clothing item recognised, stock decremented, cart updating."
-  //           );
-  //           updateCart(currentItem); // update customers basket
-  //           return updatedItem;
-  //         }
-  //       }
-  //     } else {
-  //       // curretItem doesnt match item argument, return unchanged item
-  //       return currentItem;
-  //     }
-  //   });
-  //   setStock(updatedStock);
-  // };
-
-  // /*--------------------------------------------------*/
-
-  // const incrementStock = (cartItem, amount) => {
-  //   const updatedStock = stock.map((item) => {
-  //     if (item.id === cartItem.id) {
-  //       if (typeof item.stock === "object") {
-  //         // object stock is an object
-  //         const updatedItem = {
-  //           ...item,
-  //           stock: {
-  //             ...item.stock,
-  //             [cartItem.size]: item.stock[cartItem.size] + amount,
-  //           },
-  //         };
-  //         return updatedItem;
-  //       } else {
-  //         const updatedItem = { ...item, stock: item.stock + amount };
-  //         return updatedItem;
-  //       }
-  //     } else {
-  //       return item;
-  //     }
-  //   });
-  //   setStock(updatedStock);
-  // };
-
-  // const decrementOrderByOne = (cartItem) => {
-  //   // decrement cart item by 1, and if 0, remove entry from cart. Then increment stock item's stock by one
-  //   console.log("decrementOrderByOne called:");
-  //   const updatedCart = cart
-  //     .map((currentCartItem) => {
-  //       if (
-  //         currentCartItem.id === cartItem.id &&
-  //         currentCartItem.size === cartItem.size
-  //       ) {
-  //         if (cartItem.qty === 1) {
-  //           console.log(
-  //             "only one of the item is in the cart, so entry must be removed from cart"
-  //           );
-  //           incrementStock(cartItem, 1);
-  //           return null;
-  //         } else {
-  //           console.log(
-  //             "more then one in the cart, so just count down by one "
-  //           );
-  //           const updatedCartItem = {
-  //             ...currentCartItem,
-  //             qty: currentCartItem.qty - 1,
-  //           };
-  //           incrementStock(cartItem, 1);
-  //           return updatedCartItem;
-  //         }
-  //       } else {
-  //         return currentCartItem;
-  //       }
-  //     })
-  //     .filter((item) => item !== null);
-  //   setCart(updatedCart);
-  // };
-
-
-
-  /*-------------------------------------------*/
+    setCart(updated);
+  };
 
   // return JSX element
   return (
@@ -345,20 +222,11 @@ const updateCartItems = (action, item, hasSize) => {
         updateSearchQuery={updateSearchQuery}
         searchQuery={searchQuery}
         updateCart={updateCart}
-        //handleAddToCart={handleAddToCart}
-        //decrementOrderByOne={decrementOrderByOne}
-
+        removeItemFromBasket={removeItemFromBasket}
       />
       <div className="itemGrid">
         {currentStock.map((item) => {
-          return (
-            <ItemCard
-              item={item}
-              updateCart={updateCart}
-              //handleAddToCart={handleAddToCart}
-              key={item.id}
-            />
-          );
+          return <ItemCard item={item} updateCart={updateCart} key={item.id} />;
         })}
       </div>
     </>

@@ -14,9 +14,8 @@ const NavBar = ({
   setCategoryFilter,
   updateSearchQuery,
   searchQuery,
-  //handleAddToCart,
-  //decrementOrderByOne,
   updateCart,
+  removeItemFromBasket,
 }) => {
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -79,9 +78,8 @@ const NavBar = ({
           <Basket
             cart={cart}
             returnCartLength={returnCartLength}
-            //handleAddToCart={handleAddToCart}
-            //decrementOrderByOne={decrementOrderByOne}
             updateCart={updateCart}
+            removeItemFromBasket={removeItemFromBasket}
           />
         )}
       </div>

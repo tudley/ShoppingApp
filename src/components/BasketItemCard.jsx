@@ -1,8 +1,4 @@
-const BasketItemCard = ({ 
-  cartItem, 
-  //handleAddToCart, 
-  //decrementOrderByOne
-  updateCart }) => {
+const BasketItemCard = ({ cartItem, updateCart, removeItemFromBasket }) => {
   const formatTitleString = (item) => {
     return item.title.length > 30
       ? item.title.slice(0, 26) + "..."
@@ -16,15 +12,20 @@ const BasketItemCard = ({
         <p className="basketTitle">{formatTitleString(cartItem)}</p>
         <p className="basketSize">Size : {cartItem.size}</p>
         <p className="basketQty">Qty : {cartItem.qty}</p>
-        <p className="basketPrice">£{cartItem.price}</p>
+        <p className="basketPrice">
+          £{cartItem.price} x {cartItem.qty} = £{cartItem.price * cartItem.qty}
+        </p>
       </div>
       <div className="basketControls">
-        <button onClick={() => updateCart('subtracting', cartItem)}>-</button>
+        <button onClick={() => updateCart("subtracting", cartItem)}>-</button>
         <span>{cartItem.qty}</span>
-        <button onClick={() => updateCart(cartItem, cartItem.size)}>
-          +
+        <button onClick={() => updateCart("adding", cartItem)}>+</button>
+        <button
+          className="deleteBtn"
+          onClick={() => removeItemFromBasket(cartItem)}
+        >
+          🗑️
         </button>
-        <button className="deleteBtn">🗑️</button>
       </div>
     </div>
   );
