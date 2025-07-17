@@ -1,10 +1,10 @@
 import { useState } from "react";
 
-const ItemCard = ({ 
-  item, 
+const ItemCard = ({
+  item,
   //handleAddToCart,
   updateCart,
- }) => {
+}) => {
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
 
@@ -72,7 +72,7 @@ const ItemCard = ({
           </p>
           {item.category.includes("clothing") && (
             <>
-              <label htmlfor="size">Select a size:</label>
+              <label htmlFor="size">Select a size:</label>
               <select
                 id="size"
                 name="size"
@@ -92,9 +92,11 @@ const ItemCard = ({
           <button
             className="buyButton"
             onClick={() => {
-              if (item.category.includes("clothing") && selectedSize === null) return;
-              const itemToAdd = {...item, size : selectedSize}
-              updateCart('adding', itemToAdd)}}
+              if (item.category.includes("clothing") && selectedSize === null)
+                return;
+              const itemToAdd = { ...item, size: selectedSize };
+              updateCart("adding", itemToAdd);
+            }}
           >
             {item.stock[selectedSize] === 0
               ? "Unable to add to cart"

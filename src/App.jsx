@@ -5,17 +5,29 @@ import NavBar from "./components/NavBar";
 import ItemCard from "./components/ItemCard";
 
 function App() {
+  // LocalStorage functions
+  const retreiveCartFromLocalStorage = () => {
+    const retreievedCart = JSON.parse(localStorage.getItem("cart")) || [];
+    return retreievedCart;
+  };
+
+  const saveCartToLocalStorage = () => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  };
+
   // useStates
   // stock is my array of all items (stored as objects). it is initialised from the API response.
   const [stock, setStock] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState(null);
   const [currentStock, setCurrentStock] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [cart, setCart] = useState(retreiveCartFromLocalStorage());
   const [searchQuery, setSearchQuery] = useState("");
 
+  // UseEffects
   // fetch data on initialisation
   useEffect(() => {
     fetchData();
+    retreiveCartFromLocalStorage();
   }, []);
 
   // when searchQuery changes, update currentStock
@@ -32,6 +44,11 @@ function App() {
     setCurrentStock(result);
   }, [stock, searchQuery, categoryFilter]);
 
+  useEffect(() => {
+    saveCartToLocalStorage();
+  }, [cart]);
+
+  // Functions
   // returns stock filtered by selected catgory
   const filterByCategory = (stock, category) => {
     const filteredStock = stock.filter((item) => item.category === category);
@@ -89,8 +106,6 @@ function App() {
     setCurrentStock(sorted);
   };
 
-  /*----------------NEW <FUNCTIONS--------></FUNCTIONS-------->*/
-
   const updateCart = (action, item) => {
     const hasSize = item.size !== undefined && item.size !== null; // is the items size defined? (for when adding to basket from itemCard)
     if (action === "adding") {
@@ -139,7 +154,6 @@ function App() {
         },
       };
     });
-
     setStock(updated);
   };
 
@@ -150,7 +164,6 @@ function App() {
       const exists = cart.some(
         (c) => c.id === item.id && (!hasSize || c.size === item.size)
       ); // find if item is already in cart, for items with and without size
-
       if (exists) {
         // if item is in cart, increment one baed on hasSize.
         updated = cart.map((c) => {
